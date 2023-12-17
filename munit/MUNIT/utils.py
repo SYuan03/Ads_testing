@@ -4,11 +4,11 @@ Licensed under the CC BY-NC-SA 4.0 license (https://creativecommons.org/licenses
 """
 import torchfile
 from torch.utils.data import DataLoader
-from networks import Vgg16
+from munit.MUNIT.networks import Vgg16
 from torch.autograd import Variable
 from torch.optim import lr_scheduler
 from torchvision import transforms
-from data import ImageFilelist, ImageFolder
+from munit.MUNIT.data import ImageFilelist, ImageFolder
 import torch
 import torch.nn as nn
 import os
