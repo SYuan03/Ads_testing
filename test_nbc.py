@@ -45,6 +45,7 @@ nb_part = 1000
 ###################
 logger = logging.getLogger(__name__)
 logger.setLevel(level=logging.INFO)
+os.makedirs('./logger', exist_ok=True)
 handler = logging.FileHandler("./logger/nbc_snow_night_random.txt")
 handler.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -135,7 +136,7 @@ def preprocess_transformed_images(original_image):
     img = img.resize((target_size[1], target_size[0])).convert('L')
     input_img_data = image.image_utils.img_to_array(img)
     input_img_data = np.expand_dims(input_img_data, axis=0)
-    input_img_data = preprocess_input(input_img_data, mdoe='tf')
+    input_img_data = preprocess_input(input_img_data, mode='tf')
     return input_img_data
 
 
@@ -203,7 +204,10 @@ def fitness_function(original_images, original_preds, theoretical_uncovered_sect
     preds = []
     cov_dict = deepcopy(nbc_cov_dict)
     new_covered_sections = 0
-    for img in original_images:
+
+    for img_num, img in enumerate(original_images):
+        if img_num % 100 == 0:
+            print("the {i}th image".format(i=img_num))
         transformed_image = generator(img, style)[0]
         transformed_image = preprocess_transformed_images(transformed_image)
 
@@ -268,7 +272,7 @@ def testing():
 
     iteration = 0
 
-    print(current_nbc_coverage())
+    print('## current_nbc_coverage: {}'.format(current_nbc_coverage()))
 
     while True:
         logger.info("the {nb_iter} begin".format(nb_iter=iteration))

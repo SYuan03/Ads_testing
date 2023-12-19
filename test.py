@@ -42,6 +42,8 @@ def update_bounds(intermediate_layer_outputs, layer_bounds_):
 def init_bounds(img_paths, layer_bounds_):
     img_list = os.listdir(img_paths)
     for i, img_path_ in enumerate(img_list):
+        if i % 10 != 0:
+            continue
         print(i)
         img = keras_process_image(img_paths + img_path_)
         internal_outputs = intermediate_model.predict(img)
@@ -150,6 +152,8 @@ if __name__ == "__main__":
     layer_bounds_bin = {}
     for layer in layer_to_compute:
         layer_bounds[layer.name] = None
+    os.makedirs('./cache/Dave_dropout/train_outputs', exist_ok=True)
+    os.makedirs('./cache/Dave_dropout/test_outputs', exist_ok=True)
     init_bounds(img_path, layer_bounds)
     with open('./cache/Dave_dropout/train_outputs/layer_bounds.pkl', 'rb') as f:
         layer_bounds = pickle.load(f)

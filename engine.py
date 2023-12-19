@@ -28,7 +28,7 @@ class EAEngine(object):
             self.logger.info("generate kid")
             self.kill_bad(kid)
             self.logger.info("finish selection")
-            if self.count == 60:
+            if self.count == 30:
                  return self.best_individual
         return self.best_individual
 

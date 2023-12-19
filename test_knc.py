@@ -34,8 +34,8 @@ test_image_path = './ads/data/sunny/'
 # checkpoint_path = '/home/test/program/self-driving/munit/checkpoints/rainy/gen_01000000.pt'
 # config_path = '/home/test/program/self-driving/munit/configs/sunny.yaml'
 # checkpoint_path = '/home/test/program/self-driving/munit/checkpoints/sunny/gen_01250000.pt'
-config_path = 'munit/MUNIT/configs/snow_night.yaml'
-checkpoint_path = 'munit/MUNIT/checkpoints/snow_night/gen_01000000.pt'
+config_path = 'munit/MUNIT/configs/sunny.yaml'
+checkpoint_path = 'munit/MUNIT/models/sunny.pt'
 # the self-driving system's weight file
 weights_path = './ads/Autopilot.h5'
 target_size = (40, 40)
@@ -46,7 +46,8 @@ nb_part = 1000
 ###################
 logger = logging.getLogger(__name__)
 logger.setLevel(level=logging.INFO)
-handler = logging.FileHandler("./logger/knc_snow_night_ES_time_cost.txt")
+os.makedirs('./logger', exist_ok=True)
+handler = logging.FileHandler("./logger/knc_sunny_ES_time_cost.txt")
 handler.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 handler.setFormatter(formatter)
@@ -78,12 +79,12 @@ config = get_config(config_path)
 
 munit = MUNIT_Trainer(config)
 
-# try:
-#     state_dict = torch.load(checkpoint_path)
-#     munit.gen_a.load_state_dict(state_dict['a'])
-#     munit.gen_b.load_state_dict(state_dict['b'])
-# except Exception:
-#     raise RuntimeError('load model failed')
+try:
+    state_dict = torch.load(checkpoint_path)
+    munit.gen_a.load_state_dict(state_dict['a'])
+    munit.gen_b.load_state_dict(state_dict['b'])
+except Exception:
+    raise RuntimeError('load model failed')
 
 munit.cuda()
 new_size = config['new_size']  # the GAN's input size is 256*256
@@ -195,23 +196,25 @@ def fitness_function(original_images, original_preds, theoretical_uncovered_sect
     cov_dict = deepcopy(knc_cov_dict)
     new_covered_sections = 0
     logger.info("do prediction")
-    img_num = 0
-    for img in original_images:
-        img_num += 1
-        logger.info("begin generate driving scenes {i}".format(i=img_num))
+    for img_num, img in enumerate(original_images):
+        if img_num % 10 != 0:
+            continue
+        if img_num % 100 == 0:
+            print("the {i}th image".format(i=img_num))
+        logger.info("generate driving scenes {i}".format(i=img_num))
         transformed_image = generator(img, style)[0]
         transformed_image = preprocess_transformed_images(transformed_image)
-        logger.info("finish generating driving scenes")
+        # logger.info("finish generating driving scenes")
 
         logger.info("obtain internal outputs")
         internal_outputs = intermediate_model.predict(transformed_image)
         intermediate_outputs = internal_outputs[0:-1]
         preds.append(internal_outputs[-1][0][0])
-        logger.info("finish obtaining internal outputs")
+        # logger.info("finish obtaining internal outputs")
 
         logger.info("calculate coverage")
         new_covered_sections += get_new_covered_knc_sections(intermediate_outputs, cov_dict)
-        logger.info("finish calculating coverage")
+        # logger.info("finish calculating coverage")
     # for img in original_images:
     #     transformed_image = generator(img, style)[0]
     #     transformed_image = preprocess_transformed_images(transformed_image)
@@ -256,7 +259,11 @@ def count_error_behaviors(ori_preds, preds):
 
 def update_history(original_images, style):
     preds = []
-    for img in original_images:
+    for img_num, img in enumerate(original_images):
+        if img_num % 10 != 0:
+            continue
+        if img_num % 100 == 0:
+            print("update the {i}th image".format(i=img_num))
         transformed_image = generator(img, style)[0]
         transformed_image = preprocess_transformed_images(transformed_image)
 
@@ -293,11 +300,13 @@ def testing():
             pass
 
         search_handler = EAEngine(style_dim=style_dim, fitness_func=fitness, logger=logger)
-        best = search_handler.run(150)
+        print('best')
+        best = search_handler.run(80)
 
         transformed_preds = update_history(orig_images_for_transform, best)
 
         logger.info("the {nb_iter} finish".format(nb_iter=iteration))
+        print("current k-multi section coverage is {}".format(current_knc_coverage()))
         logger.info("current k-multi section coverage is {}".format(current_knc_coverage()))
         # logger.info("current neuron boundary coverage is {}".format(current_knc_coverage()))
         logger.info("the best style code is {}".format(best))
