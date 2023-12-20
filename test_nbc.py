@@ -33,8 +33,8 @@ test_image_path = './ads/data/sunny/'
 # checkpoint_path = '/home/test/program/self-driving/munit/checkpoints/rainy/gen_01000000.pt'
 # config_path = '/home/test/program/self-driving/munit/configs/sunny.yaml'
 # checkpoint_path = '/home/test/program/self-driving/munit/checkpoints/sunny/gen_01250000.pt'
-config_path = 'munit/MUNIT/configs/snow_night.yaml'
-checkpoint_path = 'munit/MUNIT/checkpoints/snow_night/gen_01000000.pt'
+config_path = 'munit/MUNIT/configs/rainy.yaml'
+checkpoint_path = 'munit/MUNIT/models/rainy.pt'
 # the self-driving system's weight file
 weights_path = './ads/Autopilot.h5'
 target_size = (40, 40)
@@ -46,7 +46,7 @@ nb_part = 1000
 logger = logging.getLogger(__name__)
 logger.setLevel(level=logging.INFO)
 os.makedirs('./logger', exist_ok=True)
-handler = logging.FileHandler("./logger/nbc_snow_night_random.txt")
+handler = logging.FileHandler("./logger/nbc_rainy_random.txt")
 handler.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 handler.setFormatter(formatter)
@@ -206,15 +206,20 @@ def fitness_function(original_images, original_preds, theoretical_uncovered_sect
     new_covered_sections = 0
 
     for img_num, img in enumerate(original_images):
+        if img_num % 5 != 0:
+            continue
         if img_num % 100 == 0:
             print("the {i}th image".format(i=img_num))
+        logger.info("generate driving scenes {i}".format(i=img_num))
         transformed_image = generator(img, style)[0]
         transformed_image = preprocess_transformed_images(transformed_image)
 
+        logger.info("obtain internal outputs")
         internal_outputs = intermediate_model.predict(transformed_image)
         intermediate_outputs = internal_outputs[0:-1]
         preds.append(internal_outputs[-1][0][0])
 
+        logger.info("calculate coverage")
         new_covered_sections += get_new_covered_nbc_sections(intermediate_outputs, cov_dict)
 
     logger.info(new_covered_sections)
@@ -253,7 +258,11 @@ def count_error_behaviors(ori_preds, preds):
 
 def update_history(original_images, style):
     preds = []
-    for img in original_images:
+    for img_num, img in enumerate(original_images):
+        if img_num % 5 != 0:
+            continue
+        if img_num % 100 == 0:
+            print("update the {i}th image".format(i=img_num))
         transformed_image = generator(img, style)[0]
         transformed_image = preprocess_transformed_images(transformed_image)
 
@@ -279,14 +288,14 @@ def testing():
         # theoretical_uncovered_sections = nb_neurons * nb_images
         theoretical_uncovered_sections = calculate_uncovered_nbc_sections()
 
-        print(theoretical_uncovered_sections)
+        print('## theoretical_uncovered_sections: {}'.format(theoretical_uncovered_sections))
 
         @fitness_function_wrapper(orig_images_for_transform, original_steering_angles, theoretical_uncovered_sections)
         def fitness(style):
             pass
 
         search_handler = RandomSearch(style_dim=style_dim, fitness_func=fitness, logger=logger)
-        best = search_handler.run(150)
+        best = search_handler.run(64)
 
         transformed_preds = update_history(orig_images_for_transform, best)
 
