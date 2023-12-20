@@ -42,7 +42,7 @@ def update_bounds(intermediate_layer_outputs, layer_bounds_):
 def init_bounds(img_paths, layer_bounds_):
     img_list = os.listdir(img_paths)
     for i, img_path_ in enumerate(img_list):
-        if i % 10 != 0:
+        if i % 5 != 0:
             continue
         print(i)
         img = keras_process_image(img_paths + img_path_)
@@ -118,6 +118,8 @@ def init_cov(img_paths, layer_bounds_):
     img_list = os.listdir(img_paths)
     preds = []
     for i, img_path_ in enumerate(img_list):
+        if i % 5 != 0:
+            continue
         print(i)
         img = keras_process_image(img_paths + img_path_)
         internal_outputs = intermediate_model.predict(img)

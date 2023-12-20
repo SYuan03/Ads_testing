@@ -34,8 +34,8 @@ test_image_path = './ads/data/sunny/'
 # checkpoint_path = '/home/test/program/self-driving/munit/checkpoints/rainy/gen_01000000.pt'
 # config_path = '/home/test/program/self-driving/munit/configs/sunny.yaml'
 # checkpoint_path = '/home/test/program/self-driving/munit/checkpoints/sunny/gen_01250000.pt'
-config_path = 'munit/MUNIT/configs/sunny.yaml'
-checkpoint_path = 'munit/MUNIT/models/sunny.pt'
+config_path = 'munit/MUNIT/configs/rainy.yaml'
+checkpoint_path = 'munit/MUNIT/models/rainy.pt'
 # the self-driving system's weight file
 weights_path = './ads/Autopilot.h5'
 target_size = (40, 40)
@@ -47,7 +47,7 @@ nb_part = 1000
 logger = logging.getLogger(__name__)
 logger.setLevel(level=logging.INFO)
 os.makedirs('./logger', exist_ok=True)
-handler = logging.FileHandler("./logger/knc_sunny_ES_time_cost.txt")
+handler = logging.FileHandler("./logger/knc_rainy_ES_time_cost.txt")
 handler.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 handler.setFormatter(formatter)
@@ -197,7 +197,7 @@ def fitness_function(original_images, original_preds, theoretical_uncovered_sect
     new_covered_sections = 0
     logger.info("do prediction")
     for img_num, img in enumerate(original_images):
-        if img_num % 10 != 0:
+        if img_num % 5 != 0:
             continue
         if img_num % 100 == 0:
             print("the {i}th image".format(i=img_num))
@@ -260,7 +260,7 @@ def count_error_behaviors(ori_preds, preds):
 def update_history(original_images, style):
     preds = []
     for img_num, img in enumerate(original_images):
-        if img_num % 10 != 0:
+        if img_num % 5 != 0:
             continue
         if img_num % 100 == 0:
             print("update the {i}th image".format(i=img_num))
@@ -293,7 +293,7 @@ def testing():
         theoretical_uncovered_sections = theoretical_uncovered_sections \
             if theoretical_uncovered_sections <= nb_uncovered_sections else nb_uncovered_sections
 
-        print('## theoretical_uncovered_sections: '.format(theoretical_uncovered_sections))
+        print('## theoretical_uncovered_sections: {}'.format(theoretical_uncovered_sections))
 
         @fitness_function_wrapper(orig_images_for_transform, original_steering_angles, theoretical_uncovered_sections)
         def fitness(style):
@@ -301,7 +301,7 @@ def testing():
 
         search_handler = EAEngine(style_dim=style_dim, fitness_func=fitness, logger=logger)
         print('best')
-        best = search_handler.run(80)
+        best = search_handler.run(64)
 
         transformed_preds = update_history(orig_images_for_transform, best)
 
@@ -312,7 +312,7 @@ def testing():
         logger.info("the best style code is {}".format(best))
         logger.info("the number of error behaviors is {}".format(count_error_behaviors(original_steering_angles, transformed_preds)))
 
-        with open('cache/Dave_dropout/test_outputs/knc_coverage_cache_snow_night_random.pkl', 'wb') \
+        with open('cache/Dave_dropout/test_outputs/knc_coverage_cache_rainy_random.pkl', 'wb') \
                 as f:
             pickle.dump(knc_cov_dict, f, pickle.HIGHEST_PROTOCOL)
 
