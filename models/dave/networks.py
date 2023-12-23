@@ -118,11 +118,11 @@ def Dave_norminit(input_tensor=None, load_weights=False, weights_path=None):  # 
 def Dave_dropout(input_tensor=None, load_weights=False, weights_path=None):  # simplified dave
     if input_tensor is None:
         input_tensor = Input(shape=(100, 100, 3))
-    x = Convolution2D(16, 3, 3, border_mode='valid', activation='relu', name='block1_conv1')(input_tensor)
+    x = Convolution2D(16, (3, 3), padding='valid', activation='relu', name='block1_conv1')(input_tensor)
     x = MaxPooling2D(pool_size=(2, 2), name='block1_pool1')(x)
-    x = Convolution2D(32, 3, 3, border_mode='valid', activation='relu', name='block1_conv2')(x)
+    x = Convolution2D(32, (3, 3), padding='valid', activation='relu', name='block1_conv2')(x)
     x = MaxPooling2D(pool_size=(2, 2), name='block1_pool2')(x)
-    x = Convolution2D(64, 3, 3, border_mode='valid', activation='relu', name='block1_conv3')(x)
+    x = Convolution2D(64, (3, 3), padding='valid', activation='relu', name='block1_conv3')(x)
     x = MaxPooling2D(pool_size=(2, 2), name='block1_pool3')(x)
     x = Flatten(name='flatten')(x)
     x = Dense(500, activation='relu', name='fc1')(x)
@@ -147,7 +147,7 @@ def calc_rmse(yhat, label):
     mse = 0.
     count = 0
     if len(yhat) != len(label):
-        print ("yhat and label have different lengths")
+        print("yhat and label have different lengths")
         return -1
     for i in xrange(len(yhat)):
         count += 1
@@ -161,11 +161,11 @@ def calc_rmse(yhat, label):
 
 if __name__ == '__main__':
     K.set_learning_phase(0)
-    model1 = Dave_orig(load_weights=True, weights_path='./pretrained/dave_orig.h5')
-    model1.summary()
+#     model1 = Dave_orig(load_weights=True, weights_path='./pretrained/dave_orig.h5')
+#     model1.summary()
 
-    model2 = Dave_norminit(load_weights=True, weights_path='./pretrained/dave_norminit.h5')
-    model2.summary()
+#     model2 = Dave_norminit(load_weights=True, weights_path='./pretrained/dave_norminit.h5')
+#     model2.summary()
 
     model3 = Dave_dropout(load_weights=True, weights_path='./pretrained/Model3.h5')
     model3.summary()
@@ -216,23 +216,23 @@ if __name__ == '__main__':
     count = 0
     total = len(filelist1)
     for f in filelist1:
-        yhat1 = model1.predict(preprocess_image(os.path.join(seed_inputs2, f)))[0][0]
-        preds1.append(yhat1)
+        # yhat1 = model1.predict(preprocess_image(os.path.join(seed_inputs2, f)))[0][0]
+        # preds1.append(yhat1)
         # yhat2 = model2.predict(preprocess_image(os.path.join(seed_inputs2, f)))[0][0]
         # preds2.append(yhat2)
-        # yhat3 = model3.predict(preprocess_image(os.path.join(seed_inputs2, f)))[0][0]
-        # preds3.append(yhat3)
+        yhat3 = model3.predict(preprocess_image(os.path.join(seed_inputs2, f)))[0][0]
+        preds3.append(yhat3)
         labels.append(truth[f])
         if count % 500 == 0:
-            print ("processed images: " + str(count) + " total: " + str(total))
+            print("processed images: " + str(count) + " total: " + str(total))
         count = count + 1
-    print preds1[0:10]
-    print calc_rmse(preds1, labels)
+    print(preds3[0:10])
+    print(calc_rmse(preds3, labels))
     import pickle
     with open('/home/test/program/self-driving/testing/cache/Dave_orig/test_outputs/steering_angles.pkl', 'rb') as f:
         original_preds = pickle.load(f)
-        print original_preds[0:10]
-        print calc_rmse(original_preds, labels)
+        print(original_preds[0:10])
+        print(calc_rmse(original_preds, labels))
     # print preds2
     # print calc_rmse(preds2, labels)
     # print preds3

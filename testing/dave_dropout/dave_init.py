@@ -1,11 +1,14 @@
 from models.dave.networks import Dave_dropout
-from keras.models import Model
-from keras.preprocessing import image
-from keras.applications.imagenet_utils import preprocess_input
+# from keras.models import Model
+# from keras.preprocessing import image
+# from keras.applications.imagenet_utils import preprocess_input
+from tensorflow.keras.models import Model
+from tensorflow.keras.preprocessing import image
+from tensorflow.keras.applications.imagenet_utils import preprocess_input
 import numpy as np
 import pickle
 import os
-weights_path = '/home/test/program/self-driving/models/dave/pretrained/Model3.h5'
+weights_path = '/root/autodl-tmp/Model3.h5'
 
 model = Dave_dropout(load_weights=True, weights_path=weights_path)
 model.summary()
@@ -15,7 +18,8 @@ layer_to_compute = [layer for layer in model.layers
 
 outputs_layer = [layer.output for layer in layer_to_compute]
 outputs_layer.append(model.layers[-1].output)
-intermediate_model = Model(input=model.input, output=outputs_layer)
+# 修改2
+intermediate_model = Model(inputs=model.input, outputs=outputs_layer)
 
 
 def preprocess_image(img_path, target_size=(100, 100)):
@@ -30,10 +34,11 @@ layer_bounds = {}
 layer_bounds_bin = {}
 for layer in layer_to_compute:
     layer_bounds[layer.name] = None
-with open('/home/test/program/self-driving/testing/cache/Dave_dropout/train_outputs/layer_bounds.pkl', 'rb') as f:
+    
+with open('/root/autodl-tmp/software_testing_a/testing/dave_dropout/train_outputs/layer_bounds.pkl', 'rb') as f:
     layer_bounds = pickle.load(f)
 
-with open('/home/test/program/self-driving/testing/cache/Dave_dropout/train_outputs/layer_bounds_bin.pkl', 'rb') as f:
+with open('/root/autodl-tmp/software_testing_a/testing/dave_dropout/train_outputs/layer_bounds_bin.pkl', 'rb') as f:
     layer_bounds_bin = pickle.load(f)
 
 
@@ -57,20 +62,20 @@ def update_bounds(intermediate_layer_outputs):
 
 def init_bounds(img_paths):
     for i, img_path in enumerate(img_paths):
-        print i
+        print(i)
         img = preprocess_image(img_path)
         internal_outputs = intermediate_model.predict(img)
         intermediate_outputs = internal_outputs[0:-1]
         update_bounds(intermediate_outputs)
 
-    with open('/home/test/program/self-driving/testing/cache/Dave_dropout/train_outputs/layer_bounds.pkl', 'wb') as f:
+    with open('/root/autodl-tmp/software_testing_a/testing/dave_dropout/train_outputs/layer_bounds.pkl', 'wb') as f:
         pickle.dump(layer_bounds, f, pickle.HIGHEST_PROTOCOL)
 
     for layer in layer_to_compute:
         (low_bound, high_bound) = layer_bounds[layer.name]
         layer_bounds_bin[layer.name] = [np.linspace(low_bound[i], high_bound[i], 1000 + 1)
                                                  for i in range(len(high_bound))]
-    with open('/home/test/program/self-driving/testing/cache/Dave_dropout/train_outputs/layer_bounds_bin.pkl', 'wb') as f:
+    with open('/root/autodl-tmp/software_testing_a/testing/dave_dropout/train_outputs/layer_bounds_bin.pkl', 'wb') as f:
         pickle.dump(layer_bounds_bin, f, pickle.HIGHEST_PROTOCOL)
 
 
@@ -137,7 +142,7 @@ def current_knc_coverage():
 def init_cov(img_paths):
     preds = []
     for i, img_path in enumerate(img_paths):
-        print i
+        print(i)
         img = preprocess_image(img_path)
         internal_outputs = intermediate_model.predict(img)
         intermediate_outputs = internal_outputs[0:-1]
@@ -145,32 +150,32 @@ def init_cov(img_paths):
         update_knc(intermediate_outputs)
         update_nbc(intermediate_outputs)
 
-    print current_knc_coverage()
-    print current_nbc_coverage()
+    print("current_knc_coverage: ", current_knc_coverage())
+    print("current_nbc_coverage: ", current_nbc_coverage())
 
-    with open('/home/test/program/self-driving/testing/cache/Dave_dropout/test_outputs/knc_coverage.pkl', 'wb') as f:
+    with open('/root/autodl-tmp/software_testing_a/testing/dave_dropout/test_outputs/knc_coverage.pkl', 'wb') as f:
         pickle.dump(knc_cov_dict, f, pickle.HIGHEST_PROTOCOL)
 
-    with open('/home/test/program/self-driving/testing/cache/Dave_dropout/test_outputs/nbc_coverage.pkl', 'wb') as f:
+    with open('/root/autodl-tmp/software_testing_a/testing/dave_dropout/test_outputs/nbc_coverage.pkl', 'wb') as f:
         pickle.dump(nbc_cov_dict, f, pickle.HIGHEST_PROTOCOL)
 
-    with open('/home/test/program/self-driving/testing/cache/Dave_dropout/test_outputs/steering_angles.pkl', 'wb') as f:
+    with open('/root/autodl-tmp/software_testing_a/testing/dave_dropout/test_outputs/steering_angles.pkl', 'wb') as f:
         pickle.dump(preds, f, pickle.HIGHEST_PROTOCOL)
 
-# train_image_paths = '/home/test/program/self-driving/dataset/train/center/'
-# # test_image_paths = '/home/test/program/self-driving/dataset/test/center/'
+# train_image_paths = '/root/autodl-tmp/training/'
+# # test_image_paths = '/root/autodl-tmp/test/center/'
 # filelist = []
 # for image_file in sorted(os.listdir(train_image_paths)):
 #     if image_file.endswith(".jpg"):
 #         filelist.append(os.path.join(train_image_paths, image_file))
-# print len(filelist)
+# print(len(filelist))
 # init_bounds(filelist)
 
-# # train_image_paths = '/home/test/program/self-driving/dataset/train/center/'
-test_image_paths = '/home/test/program/self-driving/dataset/test/center/'
+# train_image_paths = '/root/autodl-tmp/training/'
+test_image_paths = '/root/autodl-tmp/test/center/'
 filelist = []
 for image_file in sorted(os.listdir(test_image_paths)):
     if image_file.endswith(".jpg"):
         filelist.append(os.path.join(test_image_paths, image_file))
-print len(filelist)
+print(len(filelist))
 init_cov(filelist)

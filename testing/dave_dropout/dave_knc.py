@@ -1,7 +1,10 @@
 from models.dave.networks import Dave_dropout
-from keras.models import Model
-from keras.applications.imagenet_utils import preprocess_input
-from keras.preprocessing import image
+# from keras.models import Model
+# from keras.applications.imagenet_utils import preprocess_input
+# from keras.preprocessing import image
+from tensorflow.keras.models import Model
+from tensorflow.keras.preprocessing import image
+from tensorflow.keras.applications.imagenet_utils import preprocess_input
 from keras import backend as K
 from munit.munit import MUNIT
 from munit.utils import get_config
@@ -20,8 +23,8 @@ K.set_learning_phase(0)
 # parameters
 ####################
 # the image path
-train_image_paths = '/home/test/program/self-driving/dataset/train/center/'
-test_image_paths = '/home/test/program/self-driving/dataset/test/center/'
+# train_image_paths = '/home/test/program/self-driving/dataset/train/center/'
+test_image_paths = '/root/autodl-tmp/test/center/'
 # munit model path
 # config_path = '/home/test/program/self-driving/munit/configs/snowy.yaml'
 # checkpoint_path = '/home/test/program/self-driving/munit/checkpoints/snowy/gen_01000000.pt'
@@ -31,11 +34,12 @@ test_image_paths = '/home/test/program/self-driving/dataset/test/center/'
 # checkpoint_path = '/home/test/program/self-driving/munit/checkpoints/rainy/gen_01000000.pt'
 # config_path = '/home/test/program/self-driving/munit/configs/sunny.yaml'
 # checkpoint_path = '/home/test/program/self-driving/munit/checkpoints/sunny/gen_01250000.pt'
-config_path = '/home/test/program/self-driving/munit/configs/snow_night.yaml'
-checkpoint_path = '/home/test/program/self-driving/munit/checkpoints/snow_night/gen_01000000.pt'
+config_path = '/root/autodl-tmp/software_testing_a/munit/configs/snow_night.yaml'
+checkpoint_path = '/root/autodl-tmp/snow_night.pt'
 # the self-driving system's weight file
-weights_path = '/home/test/program/self-driving/models/dave/pretrained/Model3.h5'
+weights_path = '/root/autodl-tmp/Model3.h5'
 target_size = (100, 100)
+# target_size = (40, 40)
 nb_part = 1000
 
 ###################
@@ -57,15 +61,16 @@ layer_to_compute = [layer for layer in model.layers
 
 outputs_layer = [layer.output for layer in layer_to_compute]
 outputs_layer.append(model.layers[-1].output)
-intermediate_model = Model(input=model.input, output=outputs_layer)
+# 修改input -> inputs
+intermediate_model = Model(inputs=model.input, outputs=outputs_layer)
 
-with open('/home/test/program/self-driving/testing/cache/Dave_dropout/train_outputs/layer_bounds_bin.pkl', 'rb') as f:
+with open('/root/autodl-tmp/software_testing_a/testing/dave_dropout/train_outputs/layer_bounds_bin.pkl', 'rb') as f:
     layer_bounds_bins = pickle.load(f)
-with open('/home/test/program/self-driving/testing/cache/Dave_dropout/test_outputs/knc_coverage.pkl', 'rb') as f:
+with open('/root/autodl-tmp/software_testing_a/testing/dave_dropout/test_outputs/knc_coverage.pkl', 'rb') as f:
      knc_cov_dict = pickle.load(f)
 #with open('/home/test/program/self-driving/testing/cache/Dave_dropout/test_outputs/knc_coverage_cache_snowy_random.pkl', 'rb') as f:
  #   knc_cov_dict = pickle.load(f)
-with open('/home/test/program/self-driving/testing/cache/Dave_dropout/test_outputs/steering_angles.pkl', 'rb') as f:
+with open('/root/autodl-tmp/software_testing_a/testing/dave_dropout/test_outputs/steering_angles.pkl', 'rb') as f:
     original_steering_angles = pickle.load(f)
 
 #####################
@@ -76,13 +81,15 @@ config = get_config(config_path)
 munit = MUNIT(config)
 
 try:
-    state_dict = torch.load(checkpoint_path)
+    # 修改先加载到cpu
+    state_dict = torch.load(checkpoint_path, map_location='cpu')
     munit.gen_a.load_state_dict(state_dict['a'])
     munit.gen_b.load_state_dict(state_dict['b'])
+    # munit.cuda()
 except Exception:
     raise RuntimeError('load model failed')
 
-munit.cuda()
+# munit.cuda()
 new_size = config['new_size']  # the GAN's input size is 256*256
 style_dim = config['gen']['style_dim']
 encode = munit.gen_a.encode
@@ -99,8 +106,8 @@ transform = transforms.Compose([transforms.Resize(new_size),
 # function generator use to generate transformed images by MUNIT
 def generator(img, style):
     with torch.no_grad():
-        img = Variable(transform(img).unsqueeze(0).cuda())
-        s = Variable(style.unsqueeze(0).cuda())
+        img = Variable(transform(img).unsqueeze(0))
+        s = Variable(style.unsqueeze(0))
         content, _ = encode(img)
 
         outputs = decode(content, s)
@@ -185,6 +192,18 @@ def current_knc_coverage():
         total = total + np.size(knc_cov_dict[layer.name])
     return covered / float(total)
 
+# 新增
+def my_current_knc_coverage(my_conv_dict):
+    """
+    Calculate the current K-Multi Section Neuron Coverage
+    :return:
+    """
+    covered = 0
+    total = 0
+    for layer in layer_to_compute:
+        covered = covered + np.count_nonzero(my_conv_dict[layer.name])
+        total = total + np.size(my_conv_dict[layer.name])
+    return covered / float(total)
 
 # the fitness function
 def fitness_function(original_images, original_preds, theoretical_uncovered_sections, style):
@@ -192,17 +211,18 @@ def fitness_function(original_images, original_preds, theoretical_uncovered_sect
     cov_dict = deepcopy(knc_cov_dict)
     new_covered_sections = 0
     logger.info("do prediction")
-    for img in original_images:
-        logger.info("begin generate driving scenes")
+    for img_num, img in enumerate(original_images):
+        logger.info("img {} begin".format(img_num))
+        # logger.info("begin generate driving scenes")
         transformed_image = generator(img, style)[0]
         transformed_image = preprocess_transformed_images(transformed_image)
-        logger.info("finish generating driving scenes")
+        # logger.info("finish generating driving scenes")
 
-        logger.info("obtain internal outputs")
+        # logger.info("obtain internal outputs")
         internal_outputs = intermediate_model.predict(transformed_image)
         intermediate_outputs = internal_outputs[0:-1]
         preds.append(internal_outputs[-1][0][0])
-        logger.info("finish obtaining internal outputs")
+        # logger.info("finish obtaining internal outputs")
 
         logger.info("calculate coverage")
         new_covered_sections += get_new_covered_knc_sections(intermediate_outputs, cov_dict)
@@ -217,7 +237,7 @@ def fitness_function(original_images, original_preds, theoretical_uncovered_sect
     #
     #     new_covered_sections += get_new_covered_knc_sections(intermediate_outputs, cov_dict)
 
-    logger.info(new_covered_sections)
+    logger.info("new_covered_sections is {} ".format(new_covered_sections))
     # logger.info(len(transformed_preds))
     transformed_preds = np.asarray(preds)
     o1 = float(new_covered_sections) / float(theoretical_uncovered_sections)
@@ -225,6 +245,9 @@ def fitness_function(original_images, original_preds, theoretical_uncovered_sect
     o2 = o2 / (o2 + 1)  # normalize
     logger.info("the o1 is {}".format(o1))
     logger.info("the o2 is {}".format(o2))
+    # 修改
+    cur_coverage = my_current_knc_coverage(cov_dict)
+    logger.info("my current coverage is {}".format(cur_coverage))
     del new_covered_sections
     del transformed_preds
     del cov_dict
@@ -282,13 +305,18 @@ def testing():
             if theoretical_uncovered_sections <= nb_uncovered_sections else nb_uncovered_sections
 
         print(theoretical_uncovered_sections)
+        logger.info("theoretical_uncovered_sections is {}".format(theoretical_uncovered_sections))
 
         @fitness_function_wrapper(orig_images_for_transform, original_steering_angles, theoretical_uncovered_sections)
         def fitness(style):
             pass
 
         search_handler = EAEngine(style_dim=style_dim, fitness_func=fitness, logger=logger)
-        best = search_handler.run(150)
+        # 修改
+        logger.info("###begin search###")
+        logger.info("the style_dim is {}".format(style_dim))
+        
+        best = search_handler.run(25)
 
         transformed_preds = update_history(orig_images_for_transform, best)
 
@@ -298,7 +326,7 @@ def testing():
         logger.info("the best style code is {}".format(best))
         logger.info("the number of error behaviors is {}".format(count_error_behaviors(original_steering_angles, transformed_preds)))
 
-        with open('/home/test/program/self-driving/testing/cache/Dave_dropout/test_outputs/knc_coverage_cache_snow_night_random.pkl', 'wb') \
+        with open('/root/autodl-tmp/software_testing_a/testing/dave_dropout/test_outputs/knc_coverage_cache_snow_night_random.pkl', 'wb') \
                 as f:
             pickle.dump(knc_cov_dict, f, pickle.HIGHEST_PROTOCOL)
 
