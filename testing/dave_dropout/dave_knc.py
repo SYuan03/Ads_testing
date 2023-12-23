@@ -18,6 +18,7 @@ import numpy as np
 import pickle
 import logging
 import os
+
 K.set_learning_phase(0)
 ####################
 # parameters
@@ -67,9 +68,9 @@ intermediate_model = Model(inputs=model.input, outputs=outputs_layer)
 with open('/root/autodl-tmp/software_testing_a/testing/dave_dropout/train_outputs/layer_bounds_bin.pkl', 'rb') as f:
     layer_bounds_bins = pickle.load(f)
 with open('/root/autodl-tmp/software_testing_a/testing/dave_dropout/test_outputs/knc_coverage.pkl', 'rb') as f:
-     knc_cov_dict = pickle.load(f)
-#with open('/home/test/program/self-driving/testing/cache/Dave_dropout/test_outputs/knc_coverage_cache_snowy_random.pkl', 'rb') as f:
- #   knc_cov_dict = pickle.load(f)
+    knc_cov_dict = pickle.load(f)
+# with open('/home/test/program/self-driving/testing/cache/Dave_dropout/test_outputs/knc_coverage_cache_snowy_random.pkl', 'rb') as f:
+#   knc_cov_dict = pickle.load(f)
 with open('/root/autodl-tmp/software_testing_a/testing/dave_dropout/test_outputs/steering_angles.pkl', 'rb') as f:
     original_steering_angles = pickle.load(f)
 
@@ -95,7 +96,6 @@ style_dim = config['gen']['style_dim']
 encode = munit.gen_a.encode
 style_encode = munit.gen_b.encode
 decode = munit.gen_b.decode
-
 
 # process the munit's input
 transform = transforms.Compose([transforms.Resize(new_size),
@@ -192,6 +192,7 @@ def current_knc_coverage():
         total = total + np.size(knc_cov_dict[layer.name])
     return covered / float(total)
 
+
 # 新增
 def my_current_knc_coverage(my_conv_dict):
     """
@@ -204,6 +205,7 @@ def my_current_knc_coverage(my_conv_dict):
         covered = covered + np.count_nonzero(my_conv_dict[layer.name])
         total = total + np.size(my_conv_dict[layer.name])
     return covered / float(total)
+
 
 # the fitness function
 def fitness_function(original_images, original_preds, theoretical_uncovered_sections, style):
@@ -259,7 +261,9 @@ def fitness_function_wrapper(original_images, original_preds, theoretical_uncove
     def decorator(func):
         def wrapper(*args, **kwargs):
             return fitness_function(original_images, original_preds, theoretical_uncovered_sections, *args, **kwargs)
+
         return wrapper
+
     return decorator
 
 
@@ -315,7 +319,7 @@ def testing():
         # 修改
         logger.info("###begin search###")
         logger.info("the style_dim is {}".format(style_dim))
-        
+
         best = search_handler.run(25)
 
         transformed_preds = update_history(orig_images_for_transform, best)
@@ -324,9 +328,12 @@ def testing():
         logger.info("current k-multi section coverage is {}".format(current_knc_coverage()))
         # logger.info("current neuron boundary coverage is {}".format(current_knc_coverage()))
         logger.info("the best style code is {}".format(best))
-        logger.info("the number of error behaviors is {}".format(count_error_behaviors(original_steering_angles, transformed_preds)))
+        logger.info("the number of error behaviors is {}".format(
+            count_error_behaviors(original_steering_angles, transformed_preds)))
 
-        with open('/root/autodl-tmp/software_testing_a/testing/dave_dropout/test_outputs/knc_coverage_cache_snow_night_random.pkl', 'wb') \
+        with open(
+                '/root/autodl-tmp/software_testing_a/testing/dave_dropout/test_outputs/knc_coverage_cache_snow_night_random.pkl',
+                'wb') \
                 as f:
             pickle.dump(knc_cov_dict, f, pickle.HIGHEST_PROTOCOL)
 

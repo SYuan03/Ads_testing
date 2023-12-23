@@ -33,7 +33,7 @@ class EAEngine(object):
             self.logger.info("finish selection")
             # 修改
             if self.count == 10:
-                 return self.best_individual
+                return self.best_individual
         return self.best_individual
 
     def make_kid(self, parent):
