@@ -61,7 +61,7 @@ MUNIT: https://github.com/NVlabs/MUNIT
 
 MUNIT（多模态无监督图像到图像转换）认为图像被编码出的latent code可以被进一步细化为内容编码c和风格编码s。不同类别的图像共享内容编码空间C而独享风格编码空间S，记domain X1的风格编码空间为S1，domain X2的风格编码空间为S2。对于一个输入的图像，将其编码分解为共享内容C和目标的独享风格S1，之后将共享内容C和目标的独享风格S2结合就可以进行图片风格转换。同时，从图中可以看到，不同的独享风格与共享内容的结合可以得到多样的结果。
 
-![img](https://eh1ke64g13.feishu.cn/space/api/box/stream/download/asynccode/?code=NjcyMjZlNzYyMDQyM2M1ZDRiNGQyMTI0YmNjZGYxZDhfV1Z3NzUwYU1OT1dHZFVVdFhOQ051VVJFeE1KYW04YndfVG9rZW46TjhWMWJlU3BNbzloUmR4OGRHQWNqWnU5bk9jXzE3MDM5OTc2NzA6MTcwNDAwMTI3MF9WNA)
+![image-20240103172244375](http://kiyotakawang.oss-cn-hangzhou.aliyuncs.com/img/image-20240103172244375.png)
 
 下面是MUNIT_Trainer的部分代码，我们在测试中主要使用了MUNIT的gen_a和gen_b用于对图片进行编码和解码。
 
@@ -173,11 +173,11 @@ def generator(img, style):
 
 (2)检测更多错误行为的能力，体现在原始驾驶场景数据集与新合成的具有该风格向量的驾驶场景之间的平均转向角差异，形式上，假设g(x，s)是使用风格向量s将驾驶场景x转换为目标环境类型的函数，而f(x)是返回驾驶场景x的转向角度的函数。假设Io为驾驶场景的原始数据集，则将样式向量s检测更多错误行为的能力计算为：
 
-![img](https://eh1ke64g13.feishu.cn/space/api/box/stream/download/asynccode/?code=MjIyNTU5MjZmNmRlZmRkMjNhZTdlMTkwODI5NDEwYzJfUUtHejF2WjNicVA4b2xVNzNwcXdWYk16M3llNlhVb2pfVG9rZW46QUFsSWJERkR4bzhhNjN4T1gwRGNzTkc5bnRkXzE3MDM5OTc2NzA6MTcwNDAwMTI3MF9WNA)
+![image-20240103172343276](http://kiyotakawang.oss-cn-hangzhou.aliyuncs.com/img/image-20240103172343276.png)
 
 整体适应度能力函数如下，其中norm()为归一化函数：
 
-![img](https://eh1ke64g13.feishu.cn/space/api/box/stream/download/asynccode/?code=NDcwMzU0OWExNzg0M2E0NjQ4Y2IzMjQ4ODBiNGRjNjBfejBURUpadmtMTzE3Q3pFVWJJUEIwdWx6MFdtQnlicDFfVG9rZW46RGRLSWJkeWRIbzFSNUt4Nm1FV2NrUjJMbmliXzE3MDM5OTc2NzA6MTcwNDAwMTI3MF9WNA)
+![image-20240103172400321](http://kiyotakawang.oss-cn-hangzhou.aliyuncs.com/img/image-20240103172400321.png)
 
 ```Python
 def fitness_function(original_images, original_preds, theoretical_uncovered_sections, style):
@@ -233,7 +233,7 @@ def fitness_function(original_images, original_preds, theoretical_uncovered_sect
 
 数据集为Udacity的自动驾驶数据集，我们主要使用其中sunny风格（数据集原始图片）的图像作为测试输入
 
-![img](https://eh1ke64g13.feishu.cn/space/api/box/stream/download/asynccode/?code=Mjc5OTdmZTg3Y2E2NDg1MzUyZjg3NjE0NDUyYmEzNjRfYVFEVGExMkZpS3Z5UFhPU0ZpOHpBR1RNRVlGenVFdnhfVG9rZW46SllqaGJBb2tubzlpa1p4RWVsYWNJNk4xblJnXzE3MDM5OTc2NzA6MTcwNDAwMTI3MF9WNA)
+![image-20240103172430392](http://kiyotakawang.oss-cn-hangzhou.aliyuncs.com/img/image-20240103172430392.png)
 
 第一步在Dave自带的训练集上训练Dave_dropout模型的权重，数据集下载链接https://box.nju.edu.cn/f/ed7bd122899147d5bea7/。
 
@@ -305,9 +305,9 @@ init_bounds(filelist)
 
 生成的结果会存储在train_outputs下
 
-![img](https://eh1ke64g13.feishu.cn/space/api/box/stream/download/asynccode/?code=YjAxMzExNTE1N2ExYzdhMzMxNmZkYjZiMTJmNDQ0NGJfUG5uNmwxQUZEQUN0d0lnNjZoVjBuVVhVVHJsN2tYelBfVG9rZW46VlJmRGJhdTZ0bzRoN0J4Q2tMOWMyMVloblFmXzE3MDM5OTc2NzA6MTcwNDAwMTI3MF9WNA)
+![image-20240103172451113](http://kiyotakawang.oss-cn-hangzhou.aliyuncs.com/img/image-20240103172451113.png)
 
-![img](https://eh1ke64g13.feishu.cn/space/api/box/stream/download/asynccode/?code=NzVhOTU5MTI1NGI2NTEwZjBkOWMxODU5ZTc0MDcxZDlfMDVzWk1IMUNPcDNaeHdUVlY4QXlNVFpOMkx1QXZYSE5fVG9rZW46RXNSU2JZQ3Jub1BOZU94RGtqZmNmWlBKbmFkXzE3MDM5OTc2NzA6MTcwNDAwMTI3MF9WNA)
+![image-20240103172501161](http://kiyotakawang.oss-cn-hangzhou.aliyuncs.com/img/image-20240103172501161.png)
 
 ##### 4.2.2.2 获取在测试集上的KNC初始值
 
@@ -330,7 +330,7 @@ print(len(filelist))
 init_cov(filelist)
 ```
 
-![img](https://eh1ke64g13.feishu.cn/space/api/box/stream/download/asynccode/?code=YmZlOGQ1NjYwZTU4NDM2MWRjZTZlNGYyMGVkZDM1MTRfSW81NUZ6QWJYOVRzM2tjRFI1djMyaUxpS2UyR0JhQTZfVG9rZW46SDhtU2JMUkZxb1Z5bHN4TFZ5eWNwM0ZXbnNnXzE3MDM5OTc2NzA6MTcwNDAwMTI3MF9WNA)
+![image-20240103172514254](http://kiyotakawang.oss-cn-hangzhou.aliyuncs.com/img/image-20240103172514254.png)
 
 可以看到，CH2的5614张测试集初始的knc_coverage和nbc_coverage分别是0.2815和0.0799
 
@@ -342,7 +342,7 @@ init_cov(filelist)
 
 运行dave_knc.py结果如下
 
-![img](https://eh1ke64g13.feishu.cn/space/api/box/stream/download/asynccode/?code=YjZjMDI3NTE5NWUwMTE3OGJhNDI2MDM0MTE3MzY3N2VfOVpFOHdCMENGdWtkekN0WWRVeHlsM3hueTk2STFvSENfVG9rZW46TFVKRWJpSW1Hb3dqMnR4MjUwNWNreDlYbkVjXzE3MDM5OTc2NzA6MTcwNDAwMTI3MF9WNA)
+![image-20240103172525880](http://kiyotakawang.oss-cn-hangzhou.aliyuncs.com/img/image-20240103172525880.png)
 
 可以看到覆盖了2万多个new_section，knc覆盖率也有了明显的提升
 
